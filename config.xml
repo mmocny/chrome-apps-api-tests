@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.google.ChromeSpec" version="0.1.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>ChromeApiTests</name>
+    <description>
+    </description>
+    <author>
+    </author>
+    <content src="chrome-extension://fjjookeciolhlcnaokpokcofnnmfnndm/chromeapp.html" />
+    <access origin="http://www.apache.org/*" />
+    <access origin="https://www.googleapis.com/*" />
+
+    <preference name="fullscreen" value="true" />
+    <preference name="webviewbounce" value="false" />
+</widget>
