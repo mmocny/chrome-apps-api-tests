@@ -1,21 +1,23 @@
 (function() {
 
-/******************************************************************************/
-
 'use strict';
 
+/******************************************************************************/
+
+// GLOBAL
+window.tests = {};
+
+/******************************************************************************/
+
 function getURLParameter(name) {
-  /*var queryString = new jasmine.QueryString({
-    getWindowLocation: function() { return window.location; }
-  });
-  return queryString.getParam(name);*/
   return decodeURIComponent(
       (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [,""])[1].replace(/\+/g, '%20')
     ) || null;
 }
 
 function getMode() {
-  return getURLParameter('mode') || 'main';
+  //return getURLParameter('mode') || 'main';
+  return 'main';
 }
 
 function setTitle(title) {
@@ -50,95 +52,120 @@ function logger() {
 
 /******************************************************************************/
 
-function runMain() {
-  setTitle('Cordova Tests');
-  createButton('Auto Tests', function() { location.href = 'index.html?mode=autotests'; });
-  createButton('Manual Tests', function() { location.href = 'index.html?mode=manualtests'; });
+function setUpJasmine() {
+  // Set up jasmine
+  var jasmine = jasmineRequire.core(jasmineRequire);
+  jasmineRequire.html(jasmine);
+  var jasmineEnv = jasmine.getEnv();
 
-  setDeviceInfo();
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = 300;
+  jasmineEnv.catchExceptions(true);
+
+  createHtmlReporter(jasmine);
+
+  // Set up jasmine interface
+  var jasmineInterface = {
+    it: function(desc, func) {
+      return jasmineEnv.it(desc, func);
+    },
+
+    xit: function(desc, func) {
+      return jasmineEnv.xit(desc, func);
+    },
+
+    beforeEach: function(beforeEachFunction) {
+      return jasmineEnv.beforeEach(beforeEachFunction);
+    },
+
+    afterEach: function(afterEachFunction) {
+      return jasmineEnv.afterEach(afterEachFunction);
+    },
+
+    expect: function(actual) {
+      return jasmineEnv.expect(actual);
+    },
+
+    pending: function() {
+      return jasmineEnv.pending();
+    },
+
+    addMatchers: function(matchers) {
+      return jasmineEnv.addMatchers(matchers);
+    },
+
+    spyOn: function(obj, methodName) {
+      return jasmineEnv.spyOn(obj, methodName);
+    },
+
+    clock: jasmineEnv.clock,
+
+    jsApiReporter: new jasmine.JsApiReporter({
+      timer: new jasmine.Timer()
+    }),
+
+    jasmine: jasmine,
+
+    log: logger,
+  };
+  ['describe', 'xdescribe'].forEach(function(method) {
+    jasmineInterface[method] = jasmineEnv[method].bind(jasmineEnv);
+  });
+
+  jasmineEnv.addReporter(jasmineInterface.jsApiReporter);
+
+  var target = window;
+  for (var property in jasmineInterface) {
+    target[property] = jasmineInterface[property];
+  }
 }
 
-function setDeviceInfo() {
-  var el = document.getElementById('content');
-  function display() {
-    var div = document.createElement('div');
-    div.textContent = Array.prototype.slice.apply(arguments).map(function(arg) {
-        return (typeof arg === 'string') ? arg : JSON.stringify(arg);
-      }).join(' ');
-    el.appendChild(div);
-  }
-  display("Platform: ", device.platform);
-  display("Version: ", device.version);
-  display("Uuid: ", device.uuid);
-  display("Model: ", device.model);
-  display("Width: ", screen.width);
-  display("Height: ", screen.height);
-  display("Color-Depth: ", screen.colorDepth);
-  display("User-Agent: ", navigator.userAgent);
+function createHtmlReporter(jasmine) {
+   // Set up jasmine html reporter
+  var jasmineEnv = jasmine.getEnv();
+  var contentEl = document.getElementById('content');
+  var htmlReporter = new jasmine.HtmlReporter({
+    env: jasmineEnv,
+    queryString: function() { return null },
+    onRaiseExceptionsClick: function() { /*queryString.setParam("catch", !jasmineEnv.catchingExceptions());*/ },
+    getContainer: function() { return contentEl; },
+    createElement: function() { return document.createElement.apply(document, arguments); },
+    createTextNode: function() { return document.createTextNode.apply(document, arguments); },
+    timer: new jasmine.Timer()
+  });
+  htmlReporter.initialize();
+
+  jasmineEnv.addReporter(htmlReporter);
 }
 
 /******************************************************************************/
 
 function runAutoTests() {
   setTitle('Auto Tests');
-  createButton('Back', function() { location.href = 'index.html'; });
+  createButton('Reset', chrome.runtime.reload);
 
-  // TODO: get all installed plugins
-  var plugins = [
-      'org.apache.cordova.device',
-      'org.apache.cordova.device-motion',
-      'org.chromium.storage'
-    ];
-
-  plugins.forEach(function(id) {
-    var tests;
-    try {
-      tests = cordova.require(id + '.tests');
-    } catch(ex) {
-      logger('Failed to load tests: ' + id);
-      return;
-    }
-    tests.init();
+  Object.keys(window.tests).forEach(function(key) {
+    window.tests[key].init();
   });
 
-  var test = cordova.require('org.apache.cordova.test.test');
-  test.runAutoTests();
+  // Run the tests!
+  var jasmineEnv = jasmine.getEnv();
+  jasmineEnv.execute();
 }
 
 /******************************************************************************/
 
 function runManualTests() {
   setTitle('Manual Tests');
-  createButton('Back', function() { location.href = 'index.html'; });
-}
-
-/******************************************************************************/
-
-function runUnknownMode() {
-  setTitle('Unknown Mode');
-  createButton('Reset', function() { location.href = 'index.html'; });
+  createButton('Reset', chrome.runtime.reload);
 }
 
 /******************************************************************************/
 
 function loaded() {
-  ready();
-}
-
-function ready() {
-  var test = ;
-  test.init(document.getElementById('content'), createButton, logger);
-
-  var mode = getMode();
-  logger(mode);
-  if (mode === 'main')
-    runMain();
-  else if (mode === 'autotests')
-    runAutoTests();
-  else if (mode === 'manualtests')
-    runManualTests();
-  else
-    runUnknownMode();
+  setTitle('Cordova Tests');
+  setUpJasmine();
+  createButton('Auto Tests', runAutoTests);
+  createButton('Manual Tests', runManualTests);
 }
 
 document.addEventListener("DOMContentLoaded", loaded);
