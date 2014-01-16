@@ -1,6 +1,13 @@
 (function() {
+'use strict';
 
-function init() {
+/******************************************************************************/
+
+var StorageTests = {};
+
+/******************************************************************************/
+
+StorageTests.defineAutoTests = function() {
 
   it('should contain definitions', function() {
     expect(chrome.storage).toBeDefined();
@@ -403,11 +410,13 @@ function init() {
   });
 };
 
+/******************************************************************************/
+
 if (typeof cordova !== 'undefined') {
   eval(require('org.apache.cordova.test-framework.test').injectJasmineInterface(this, 'this'));
-  exports.init = init;
+  exports.init = StorageTests.defineAutoTests;
 } else {
-  tests.storage_init = init
+  tests['chrome.storage'] = StorageTests;
 }
 
 }());
