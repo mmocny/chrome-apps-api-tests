@@ -39,6 +39,12 @@ function createButton(title, callback) {
   content.appendChild(div);
 }
 
+function clearContent() {
+  var content = document.getElementById('content');
+  //while (content.firstChild) content.removeChild(content.firstChild);
+  // TODO
+}
+
 function logger() {
   console.log.apply(console, Array.prototype.slice.apply(arguments));
   var el = document.getElementById('log');
@@ -141,10 +147,11 @@ function createHtmlReporter(jasmine) {
 
 function runAutoTests() {
   setTitle('Auto Tests');
+  clearContent();
   createButton('Reset', chrome.runtime.reload);
 
   Object.keys(window.tests).forEach(function(key) {
-    window.tests[key].init();
+    window.tests[key].defineAutoTests();
   });
 
   // Run the tests!
@@ -156,6 +163,7 @@ function runAutoTests() {
 
 function runManualTests() {
   setTitle('Manual Tests');
+  clearContent();
   createButton('Reset', chrome.runtime.reload);
 }
 
@@ -164,6 +172,7 @@ function runManualTests() {
 function loaded() {
   setTitle('Cordova Tests');
   setUpJasmine();
+  clearContent();
   createButton('Auto Tests', runAutoTests);
   createButton('Manual Tests', runManualTests);
 }
