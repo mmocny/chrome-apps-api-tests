@@ -16,6 +16,17 @@
     }
   },
   "permissions": [
-    "storage","alarms","notifications"
+    "alarms",
+    "fileSystem",
+    "identity",
+    "notifications",
+    "pushMessaging",
+    {
+      "socket": [ "tcp-connect", "tcp-listen", "udp-send-to", "udp-bind", "udp-multicast-membership" ]
+    },
+    "storage",
+    "syncFileSystem",
+    "http://www.apache.org/*",
+    "https://www.googleapis.com/*"
   ]
 }

@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-registerTest("chrome.runtime", function() {
+registerTest("chrome.runtime", function(runningInBackground) {
   'use strict';
+
   it('getManifest() should have a name that is a string', function() {
     var manifest = chrome.runtime.getManifest();
     expect(typeof manifest.name).toBe('string'); // .isEqual(jasmine.any(String)) seems to not work
@@ -12,7 +13,7 @@ registerTest("chrome.runtime", function() {
     expect(function() {chrome.runtime.getBackgroundPage();}).toThrow();
     expect(function() {chrome.runtime.getBackgroundPage(1);}).toThrow();
   });
-  it('getBackgroundPage() should provide a window object asynchronously.', function() {
+  it('getBackgroundPage() should provide a window object asynchronously.', function(done) {
     var bgPage = null;
     chrome.runtime.getBackgroundPage(function(wnd) {
       bgPage = wnd;
@@ -21,11 +22,9 @@ registerTest("chrome.runtime", function() {
       } else {
         expect(window == bgPage).toBe(false, 'window should != bgPage');
       }
+      done();
     });
     expect(bgPage).toBeNull();
-    waitsFor(function() {
-      return !!bgPage;
-    });
   });
   it('getURL() should throw when not args are invalid.', function() {
     expect(function() {chrome.runtime.getURL();}).toThrow();

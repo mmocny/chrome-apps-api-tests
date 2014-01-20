@@ -112,12 +112,42 @@ function setUpJasmine() {
     jasmine: jasmine,
 
     log: logger,
+
+    isOnCordova: function() {
+      return false;
+    },
+
+    isOnChromeRuntime: function() {
+      return true;
+    },
+
+    describeCordovaOnly: function() {
+      if (!isOnCordova()) return;
+      describe.apply(null, arguments);
+    },
+
+    describeChromeRuntimeOnly: function() {
+     if (!isOnChromeRuntime()) return;
+     describe.apply(null, arguments);
+    },
   };
   ['describe', 'xdescribe'].forEach(function(method) {
     jasmineInterface[method] = jasmineEnv[method].bind(jasmineEnv);
   });
 
   jasmineEnv.addReporter(jasmineInterface.jsApiReporter);
+
+  jasmineInterface['itShouldHaveAnEvent']=function(obj, eventName) {
+    it('should have an event called ' + eventName, function() {
+      expect(obj[eventName]).toEqual(jasmine.any(chrome.Event));
+    });
+  }
+
+  jasmineInterface['itShouldHaveAPropertyOfType']=function(obj, propName, typeName) {
+    it('should have a "' + propName + '" ' + typeName, function() {
+      expect(typeof obj[propName]).toBe(typeName);
+    });
+  }
 
   var target = window;
   for (var property in jasmineInterface) {
