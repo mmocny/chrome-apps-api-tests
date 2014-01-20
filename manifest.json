@@ -16,6 +16,6 @@
     }
   },
   "permissions": [
-    "storage"
+    "storage","alarms"
   ]
 }
