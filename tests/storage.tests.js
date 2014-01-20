@@ -353,7 +353,6 @@ registerTest("Storage", function() {
             'string': { 'oldValue' : 'test' /*, 'newValue' : undefined*/}
           };
           var callback = function(items, areaName) {
-console.log('b');
             expect(items).toEqual(answer);
             expect(areaName).toEqual(type);
             chrome.storage.onChanged.removeListener(callback);
@@ -362,9 +361,7 @@ console.log('b');
           storagearea.clear(function(){
             storagearea.set(obj,function(){
               chrome.storage.onChanged.addListener(callback);
-console.log('c');
               storagearea.remove(request,function(){
-console.log('a');
               });
             });
           });

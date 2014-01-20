@@ -63,12 +63,10 @@ registerTest("AlarmTest", function() {
         chrome.alarms.clearAll();
         chrome.alarms.getAll(function(alarms) {
           expect(alarms.length).toBe(0);
-console.log('before');
         });
       });
       afterEach(function() {
         chrome.alarms.clearAll();
-console.log('after');
       });
 
       it('when set only', function(done) {
@@ -80,11 +78,9 @@ console.log('after');
           expect(alarm.scheduledTime).toBeWithinDelta(expectedFireTime, alarmEarlyTolerance, alarmLateTolerance);
           expect(alarm.periodInMinutes).not.toBeDefined();
           chrome.alarms.onAlarm.removeListener(alarmHandler);
-console.log('done');
           done();
         });
         chrome.alarms.create('myalarm', { when:expectedFireTime });
-console.log('create');
       });
 
       it('delayInMinutes set only', function(done) {
