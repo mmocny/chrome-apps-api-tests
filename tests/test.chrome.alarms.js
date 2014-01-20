@@ -13,6 +13,7 @@ registerTest("AlarmTest", function() {
   var testTimeout = sliceLowerLimit*1.5;
   var testInnerTimeout = sliceLowerLimit*1.5;
   var minTestTime=sliceLowerLimit;
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = testTimeout;
 
   var isWithinDelta = function(actual, expected, lowerDelta, upperDelta) {
         return expected - lowerDelta <= actual && expected + upperDelta >= actual;
@@ -200,8 +201,9 @@ registerTest("AlarmTest", function() {
     });
 
     describe('testing clear', function() {
-      var alarmHandler;
       var createAlarms;
+      var alarmHandler;
+      var nameSpy =jasmine.createSpy('nameSpy');
 
       beforeEach(function() {
         var inputAlarmInfo = { alarm1:{ when:Date.now() + minTestTime }, alarm2:{ delayInMinutes:minTestTime/60000 },
@@ -210,7 +212,7 @@ registerTest("AlarmTest", function() {
         chrome.alarms.getAll(function(alarms) {
           expect(alarms.length).toBe(0);
         });
-        nameSpy = jasmine.createSpy('nameSpy');
+        nameSpy =jasmine.createSpy('nameSpy');
         chrome.alarms.onAlarm.addListener(function alarmHandler(alarm) {
           nameSpy(alarm.name);
         });
