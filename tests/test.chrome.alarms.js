@@ -13,20 +13,32 @@ registerTest("AlarmTest", function() {
   var testTimeout = sliceLowerLimit*1.5;
   var testInnerTimeout = sliceLowerLimit*1.5;
   var minTestTime=sliceLowerLimit;
-  jasmine.DEFAULT_TIMEOUT_INTERVAL = testTimeout;
+  jasmine.DEFAULT_TIMEOUT_INTERVAL = 1000 //testTimeout;
 
   var isWithinDelta = function(actual, expected, lowerDelta, upperDelta) {
         return expected - lowerDelta <= actual && expected + upperDelta >= actual;
   };
   var customMatchers = {
-       toBeWithinDelta: function(expected, lowerDelta, upperDelta) {
-          return isWithinDelta(this.actual, expected, lowerDelta, upperDelta);
+       toBeWithinDelta: function(util,customEqualityTesters){
+          return { 
+             compare: function(actual, expected, lowerDelta, upperDelta) {
+                 var result={};
+                 result.pass = isWithinDelta(actual, expected, lowerDelta, upperDelta);
+                 return result;
+             }
+          }
        },
-       toMatchAlarm: function(expectedAlarm) {
-          return expectedAlarm.name == this.actual.name &&
-               isWithinDelta(this.actual.scheduledTime, expectedAlarm.scheduledTime,
+       toMatchAlarm:function(util,customEqualityTesters){
+          return {
+             compare:  function(actual,expectedAlarm) {
+               var result ={};
+               result.pass = expectedAlarm.name == actual.name &&
+                      isWithinDelta(actual.scheduledTime, expectedAlarm.scheduledTime,
                                scheduledEarlyTolerance, scheduledLateTolerance) &&
-                 expectedAlarm.periodInMinutes == this.actual.periodInMinutes;
+                 expectedAlarm.periodInMinutes == actual.periodInMinutes;
+               return result;
+             }
+          }
        }
   };
 
@@ -51,10 +63,12 @@ registerTest("AlarmTest", function() {
         chrome.alarms.clearAll();
         chrome.alarms.getAll(function(alarms) {
           expect(alarms.length).toBe(0);
+console.log('before');
         });
       });
       afterEach(function() {
         chrome.alarms.clearAll();
+console.log('after');
       });
 
       it('when set only', function(done) {
@@ -66,9 +80,11 @@ registerTest("AlarmTest", function() {
           expect(alarm.scheduledTime).toBeWithinDelta(expectedFireTime, alarmEarlyTolerance, alarmLateTolerance);
           expect(alarm.periodInMinutes).not.toBeDefined();
           chrome.alarms.onAlarm.removeListener(alarmHandler);
+console.log('done');
           done();
         });
         chrome.alarms.create('myalarm', { when:expectedFireTime });
+console.log('create');
       });
 
       it('delayInMinutes set only', function(done) {
