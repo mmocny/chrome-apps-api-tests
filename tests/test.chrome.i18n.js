@@ -46,31 +46,37 @@ registerTest('chrome.i18n', function(runningInBackground) {
         var computed = window.getComputedStyle(testNode, null);
         expect(computed.getPropertyValue('background-image')).toMatch(/^url.*__MSG_.*.png\)$/);
       });
-
+    });
+    describe('CSS', function() {
+      var styleNode;
+      afterEach(function() {
+          styleNode.parentNode.removeChild(styleNode);
+      });
       it('should not replace placeholders within injected style tags', function() {
-        var styleNode = document.createElement('style');
+        styleNode = document.createElement('style');
         styleNode.innerHTML = '.asdf { height: 2px; width: __MSG_testwidth__; }';
         document.querySelector('head').appendChild(styleNode);
 
-        after(function() {
-          styleNode.parentNode.removeChild(styleNode);
-        });
         testNode = document.createElement('img');
         testNode.className = 'asdf';
         document.body.appendChild(testNode);
         expect(testNode.offsetHeight).toBe(2);
         expect(testNode.offsetWidth).toBe(0);
       });
-
-      it('should not replace placeholders within Blob URL style tags', function() {
-        var URL_ = window.URL || window.webkitURL;
-        var linkNode = document.createElement('link');
-        var blob = new Blob(['.asdf { height:1px; width: __MSG_testwidth__; }'], {'type' : 'text/css'});
-        var url = URL_.createObjectURL(blob);
-        after(function() {
+    });
+    describe('CSS', function() {
+      var linkNode;
+      var URL_;
+      var url;
+      afterEach(function() {
           linkNode.parentNode.removeChild(linkNode);
           URL_.revokeObjectURL(url);
-        });
+      });
+      it('should not replace placeholders within Blob URL style tags', function(done) {
+        URL_ = window.URL || window.webkitURL;
+        linkNode = document.createElement('link');
+        var blob = new Blob(['.asdf { height:1px; width: __MSG_testwidth__; }'], {'type' : 'text/css'});
+        url = URL_.createObjectURL(blob);
         linkNode.rel = 'stylesheet';
         linkNode.href = url;
         document.querySelector('head').appendChild(linkNode);
@@ -78,30 +84,34 @@ registerTest('chrome.i18n', function(runningInBackground) {
         testNode = document.createElement('img');
         testNode.className = 'asdf';
         document.body.appendChild(testNode);
-        waitsFor(function() {
+        setTimeout(function() {
           if (testNode.offsetHeight == 1) {
             expect(testNode.offsetWidth).toBe(0);
-            return true;
+            done();
           }
-        }, 1000);
+        }, 100);
       });
-      it('should not replace placeholders XHR\'d text files', function() {
+    });
+    describe('CSS', function() {
+      it('should not replace placeholders XHR\'d text files', function(done) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', 'assets/i18n_test.txt', true);
         // Even with Mime-type set, it's not processed.
         xhr.overrideMimeType('text/css');
-        xhr.onload = waitUntilCalled(function() {
+        xhr.onload = function() {
           expect(xhr.responseText).toMatch(/@@/);
-        }, 1000);
+          done();
+        };
         xhr.send();
       });
 /* Not yet.
-      it('should replace placeholders XHR\'d CSS files', function() {
+      it('should replace placeholders XHR\'d CSS files', function(done) {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', 'assets/i18n_test.css', true);
-        xhr.onload = waitUntilCalled(function() {
+        xhr.onload = function() {
           expect(xhr.responseText).toMatch(chrome.runtime.id);
-        }, 1000);
+          done();
+        };
         xhr.send();
       });
 */
@@ -150,18 +160,20 @@ registerTest('chrome.i18n', function(runningInBackground) {
   });
 
   if (langEnUs) {
-    it('should replace placeholders within manifest.json', function() {
+    it('should replace placeholders within manifest.json', function(done) {
       var manifest = chrome.runtime.getManifest();
-      expect(manifest.name).toBe('Chrome Spec');
+      expect(manifest.name).toBe('ChromeApiTests');
+      done();
     });
 
     describe('getAcceptLanguages()', function() {
-      it('should return a list', function() {
-        chrome.i18n.getAcceptLanguages(waitUntilCalled(function(x) {
+      it('should return a list', function(done) {
+        chrome.i18n.getAcceptLanguages(function(x) {
           for (var i = 0; i < x.length; ++i) {
             expect(x[i]).toMatch(/^en/);
           }
-        }));
+          done();
+        });
       });
     });
   }

@@ -28,5 +28,7 @@
     "syncFileSystem",
     "http://www.apache.org/*",
     "https://www.googleapis.com/*"
-  ]
+  ],
+  "default_locale": "fr"
+
 }
