@@ -9,12 +9,12 @@ window.tests = {};
 
 /******************************************************************************/
 
-function getMode() {
-  return localStorage['mode'] || 'main';
+function getMode(callback) {
+  return chrome.storage.local.get({'mode': 'main'}, funtion(result) { callback(result['mode']); });
 }
 
 function setMode(mode) {
-  localStorage['mode'] = mode;
+  chrome.storage.local.set({'mode': mode});
   clearContent();
 
   var handlers = {
@@ -54,6 +54,7 @@ function createButton(title, callback) {
   content.appendChild(div);
 }
 
+// TODO: make a better logger
 function logger() {
   console.log.apply(console, Array.prototype.slice.apply(arguments));
   var el = document.getElementById('log');
@@ -74,112 +75,88 @@ function setUpJasmine() {
   var jasmineEnv = jasmine.getEnv();
 
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 300;
-  jasmineEnv.catchExceptions(true);
-
-  createHtmlReporter(jasmine);
+  jasmineEnv.catchExceptions(false);
 
   // Set up jasmine interface
-  var jasmineInterface = {
-    it: function(desc, func) {
-      return jasmineEnv.it(desc, func);
-    },
+  var jasmineInterface = Object.create(null);
+  jasmineInterface.jasmine = jasmine;
 
-    xit: function(desc, func) {
-      return jasmineEnv.xit(desc, func);
-    },
+  // Fill in jasmineInterface with built-ins
+  var jasmine_env_functions = ['describe',
+                               'xdescribe',
+                               'it',
+                               'xit',
+                               'beforeEach',
+                               'afterEach',
+                               'expect',
+                               'pending',
+                               'spyOn',
+                               'addCustomEqualityTester',
+                               'addMatchers'];
 
-    beforeEach: function(beforeEachFunction) {
-      return jasmineEnv.beforeEach(beforeEachFunction);
-    },
-
-    afterEach: function(afterEachFunction) {
-      return jasmineEnv.afterEach(afterEachFunction);
-    },
-
-    expect: function(actual) {
-      return jasmineEnv.expect(actual);
-    },
-
-    pending: function() {
-      return jasmineEnv.pending();
-    },
-
-    addMatchers: function(matchers) {
-      return jasmineEnv.addMatchers(matchers);
-    },
-
-    spyOn: function(obj, methodName) {
-      return jasmineEnv.spyOn(obj, methodName);
-    },
-
-    clock: jasmineEnv.clock,
-
-    jsApiReporter: new jasmine.JsApiReporter({
-      timer: new jasmine.Timer()
-    }),
-
-    jasmine: jasmine,
-
-    log: logger,
-
-    isOnCordova: function() {
-      return false;
-    },
-
-    isOnChromeRuntime: function() {
-      return true;
-    },
-
-    describeCordovaOnly: function() {
-      if (!isOnCordova()) return;
-      describe.apply(null, arguments);
-    },
-
-    describeChromeRuntimeOnly: function() {
-     if (!isOnChromeRuntime()) return;
-     describe.apply(null, arguments);
-    },
-  };
-  ['describe', 'xdescribe'].forEach(function(method) {
-    jasmineInterface[method] = jasmineEnv[method].bind(jasmineEnv);
+  jasmine_env_functions.forEach(function(fn) {
+    jasmineInterface[fn] = jasmineEnv[fn].bind(jasmineEnv);
   });
+  jasmineInterface.clock = jasmineEnv.clock;
 
+  // Extend jasmineInterface with custom helpers
+  addJasmineHelpers(jasmineInterface);
+
+  // Add Reporters
+  jasmineInterface.jsApiReporter = new jasmine.JsApiReporter({ timer: new jasmine.Timer() });
   jasmineEnv.addReporter(jasmineInterface.jsApiReporter);
 
-  jasmineInterface['itShouldHaveAnEvent']=function(obj, eventName) {
-    it('should have an event called ' + eventName, function() {
-      expect(obj[eventName]).toEqual(jasmine.any(chrome.Event));
-    });
-  }
+  jasmineInterface.htmlReporter = new jasmine.HtmlReporter({
+    env: jasmineEnv,
+    queryString: function() { return null; },
+    onRaiseExceptionsClick: function() { },
+    getContainer: function() { return document.getElementById('content'); },
+    createElement: function() { return document.createElement.apply(document, arguments); },
+    createTextNode: function() { return document.createTextNode.apply(document, arguments); },
+    timer: new jasmine.Timer()
+  });
+  jasmineInterface.htmlReporter.initialize();
+  jasmineEnv.addReporter(jasmineInterface.htmlReporter);
 
-  jasmineInterface['itShouldHaveAPropertyOfType']=function(obj, propName, typeName) {
-    it('should have a "' + propName + '" ' + typeName, function() {
-      expect(typeof obj[propName]).toBe(typeName);
-    });
-  }
+  // Add Spec Filter
+  jasmineEnv.specFilter = function(spec) {
+    logger(spec.getFullName());
+    return true;
+  };
 
+  // Attach jasmineInterface to global object
   var target = window;
   for (var property in jasmineInterface) {
     target[property] = jasmineInterface[property];
   }
 }
 
-function createHtmlReporter(jasmine) {
-   // Set up jasmine html reporter
-  var jasmineEnv = jasmine.getEnv();
-  var contentEl = document.getElementById('content');
-  var htmlReporter = new jasmine.HtmlReporter({
-    env: jasmineEnv,
-    queryString: function() { return null },
-    onRaiseExceptionsClick: function() { /*queryString.setParam("catch", !jasmineEnv.catchingExceptions());*/ },
-    getContainer: function() { return contentEl; },
-    createElement: function() { return document.createElement.apply(document, arguments); },
-    createTextNode: function() { return document.createTextNode.apply(document, arguments); },
-    timer: new jasmine.Timer()
-  });
-  htmlReporter.initialize();
+function addJasmineHelpers(jasmineInterface) {
+  jasmineInterface.log = logger;
 
-  jasmineEnv.addReporter(htmlReporter);
+  jasmineInterface.isOnCordova = function() {
+    return false;
+  };
+
+  jasmineInterface.isOnChromeRuntime = function() {
+    return true;
+  };
+
+  jasmineInterface.describeCordovaOnly = (jasmineInterface.isOnCordova() ? jasmineInterface.describe : function(){});
+
+  jasmineInterface.describeChromeRuntimeOnly = (jasmineInterface.isOnChromeRuntime() ? jasmineInterface.describe : function(){});
+
+  jasmineInterface.itShouldHaveAnEvent = function(obj, eventName) {
+    jasmineInterface.it('should have an event called ' + eventName, function() {
+      jasmineInterface.expect(obj[eventName]).toEqual(jasmineInterface.jasmine.any(chrome.Event));
+    });
+  }
+
+  jasmineInterface.itShouldHaveAPropertyOfType = function(obj, propName, typeName) {
+    jasmineInterface.it('should have a "' + propName + '" ' + typeName, function() {
+      jasmineInterface.expect(typeof obj[propName]).toBe(typeName);
+    });
+  }
 }
 
 /******************************************************************************/
@@ -219,7 +196,7 @@ function runMain() {
 
 function loaded() {
   setUpJasmine();
-  setMode(getMode());
+  getMode(setMode);
 }
 
 document.addEventListener("DOMContentLoaded", loaded);
