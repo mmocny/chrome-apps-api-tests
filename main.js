@@ -9,15 +9,30 @@ window.tests = {};
 
 /******************************************************************************/
 
-function getURLParameter(name) {
-  return decodeURIComponent(
-      (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [,""])[1].replace(/\+/g, '%20')
-    ) || null;
+function getMode() {
+  return localStorage['mode'] || 'main';
 }
 
-function getMode() {
-  //return getURLParameter('mode') || 'main';
-  return 'main';
+function setMode(mode) {
+  localStorage['mode'] = mode;
+  clearContent();
+
+  var handlers = {
+    'main': runMain,
+    'auto': runAutoTests,
+    'manual': runManualTests
+  }
+  if (!handlers.hasOwnProperty(mode)) {
+    return console.error("Unsopported mode: " + mode);
+  }
+
+  handlers[mode]();
+}
+
+function clearContent() {
+  var content = document.getElementById('content');
+  //while (content.firstChild) content.removeChild(content.firstChild);
+  // TODO
 }
 
 function setTitle(title) {
@@ -37,12 +52,6 @@ function createButton(title, callback) {
   button.classList.add('topcoat-button');
   div.appendChild(button);
   content.appendChild(div);
-}
-
-function clearContent() {
-  var content = document.getElementById('content');
-  //while (content.firstChild) content.removeChild(content.firstChild);
-  // TODO
 }
 
 function logger() {
@@ -177,9 +186,9 @@ function createHtmlReporter(jasmine) {
 
 function runAutoTests() {
   setTitle('Auto Tests');
-  clearContent();
-  createButton('Reset', chrome.runtime.reload);
+  createButton('Back', setMode.bind(null, 'main'));
 
+  // TODO: Add selective checkmarks
   Object.keys(window.tests).forEach(function(key) {
     window.tests[key].defineAutoTests();
   });
@@ -193,18 +202,24 @@ function runAutoTests() {
 
 function runManualTests() {
   setTitle('Manual Tests');
-  clearContent();
-  createButton('Reset', chrome.runtime.reload);
+  createButton('Back', setMode.bind(null, 'main'));
+}
+
+/******************************************************************************/
+
+function runMain() {
+  setTitle('Chrome Apps Api Tests');
+
+  createButton('Auto Tests', setMode.bind(null, 'auto'));
+  createButton('Manual Tests', setMode.bind(null, 'manual'));
+  createButton('Reset App', chrome.runtime.reload);
 }
 
 /******************************************************************************/
 
 function loaded() {
-  setTitle('Cordova Tests');
   setUpJasmine();
-  clearContent();
-  createButton('Auto Tests', runAutoTests);
-  createButton('Manual Tests', runManualTests);
+  setMode(getMode());
 }
 
 document.addEventListener("DOMContentLoaded", loaded);
