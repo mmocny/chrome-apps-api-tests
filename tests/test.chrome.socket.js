@@ -82,7 +82,7 @@ registerTest('chrome.socket', function(runningInBackground) {
   });
 
   describe('System', function() {
-    itWaitsForDone('getNetworkList', function(done) {
+    it('getNetworkList', function(done) {
       chrome.socket.getNetworkList(function(result) {
         expect(result).toBeTruthy();
         expect(result.length).toBeGreaterThan(0);
@@ -97,42 +97,50 @@ registerTest('chrome.socket', function(runningInBackground) {
 
   describe('TCP', function() {
     beforeEach(function() {
-      this.addMatchers({
-        toBeValidTcpReadResultEqualTo: function(data) {
-          if (Object.prototype.toString.call(data).slice(8,-1) !== 'ArrayBuffer')
-            throw new Error('toBeValidTcpReadResultEqualTo expects an ArrayBuffer');
 
-          var readResult = this.actual;
-          if (!readResult) return false;
-          if (readResult.resultCode <= 0) return false;
-          if (!readResult.data) return false;
-          if (Object.prototype.toString.call(readResult.data).slice(8,-1) !== 'ArrayBuffer') return false;
+      var customMatchers={
+        toBeValidTcpReadResultEqualTo: function(util, customEqualityTesters){
+          return {
+            compare : function(actual, expected) {
+              if (Object.prototype.toString.call(data).slice(8,-1) !== 'ArrayBuffer')
+                throw new Error('toBeValidTcpReadResultEqualTo expects an ArrayBuffer');
 
-          var sent = new Uint8Array(data);
-          var recv = new Uint8Array(readResult.data);
+              var result={};
+              result.pass=true;
+              var readResult = actual;
+              if (!readResult) result.pass=false;
+              if (readResult.resultCode <= 0) result.pass=false;
+              if (!readResult.data) result.pass=false;
+              if (Object.prototype.toString.call(readResult.data).slice(8,-1) !== 'ArrayBuffer') result.pass=false;
 
-          if (recv.length !== sent.length) return false;
-          for (var i = 0; i < recv.length; i++) {
-            if (recv[i] !== sent[i]) return false;
+              var sent = new Uint8Array(data);
+              var recv = new Uint8Array(readResult.data);
+
+              if (recv.length !== sent.length) result.pass=false;
+              for (var i = 0; i < recv.length; i++) {
+                if (recv[i] !== sent[i]) result.pass=false;
+              }
+              return result;
+            }
           }
-          return true;
-        },
-      });
+        }
+      };
+      addMatchers(customMatchers);
     });
 
-    beforeEachWaitsForDone(function(done) {
+    beforeEach(function(done) {
       createSockets('tcp', 2, done);
     });
 
 
-    itWaitsForDone('port is available (sanity test)', function(done) {
+    it('port is available (sanity test)', function(done) {
       chrome.socket.listen(sockets[0].socketId, bindAddr, port, function(listenResult) {
         expect(listenResult).toEqual(0);
         done();
       });
     });
 
-    itWaitsForDone('accept connect read write', function(done) {
+    it('accept connect read write', function(done) {
       chrome.socket.listen(sockets[0].socketId, bindAddr, port, function(listenResult) {
         expect(listenResult).toEqual(0);
 
@@ -158,7 +166,7 @@ registerTest('chrome.socket', function(runningInBackground) {
       });
     });
 
-    itWaitsForDone('connect before accept', function(done) {
+    it('connect before accept', function(done) {
       chrome.socket.listen(sockets[0].socketId, bindAddr, port, function(listenResult) {
         expect(listenResult).toEqual(0);
 
@@ -179,7 +187,7 @@ registerTest('chrome.socket', function(runningInBackground) {
       });
     });
 
-    itWaitsForDone('getInfo works', function(done) {
+    it('getInfo works', function(done) {
       chrome.socket.getInfo(sockets[0].socketId, function(socketInfo) {
         expect(socketInfo.socketType).toEqual('tcp');
         expect(socketInfo.connected).toBeFalsy();
@@ -242,59 +250,67 @@ registerTest('chrome.socket', function(runningInBackground) {
   });
 
   describe('UDP', function() {
+
     beforeEach(function() {
-      this.addMatchers({
-        toBeValidUdpReadResultEqualTo: function(data) {
-          if (Object.prototype.toString.call(data).slice(8,-1) !== 'ArrayBuffer')
-            throw new Error('toBeValidTcpReadResultEqualTo expects an ArrayBuffer');
+      var customMatchers={
+        toBeValidUdpReadResultEqualTo: function(util, customEqualityTesters){
+          return {
+            compare : function(actual, expected) {
+              if (Object.prototype.toString.call(data).slice(8,-1) !== 'ArrayBuffer')
+                throw new Error('toBeValidTcpReadResultEqualTo expects an ArrayBuffer');
 
-          var readResult = this.actual;
-          if (!readResult) return false;
-          if (readResult.resultCode <= 0) return false;
-          if (!readResult.data) return false;
-          if (!readResult.address) return false;
-          if (!readResult.port) return false;
-          if (Object.prototype.toString.call(readResult.data).slice(8,-1) !== 'ArrayBuffer') return false;
+              var result={};
+              result.pass=true;
+              var readResult = actual;
+              if (!readResult) result.pass= false;
+              if (readResult.resultCode <= 0) result.pass=false;
+              if (!readResult.data) result.pass=false;
+              if (!readResult.address) result.pass= false;
+              if (!readResult.port) result.pass= false;
+              if (Object.prototype.toString.call(readResult.data).slice(8,-1) !== 'ArrayBuffer') result.pass=false;
 
-          var sent = new Uint8Array(data);
-          var recv = new Uint8Array(readResult.data);
+              var sent = new Uint8Array(data);
+              var recv = new Uint8Array(readResult.data);
 
-          if (recv.length !== sent.length) return false;
-          for (var i = 0; i < recv.length; i++) {
-            if (recv[i] !== sent[i]) return false;
+              if (recv.length !== sent.length) result.pass= false;
+              for (var i = 0; i < recv.length; i++) {
+                if (recv[i] !== sent[i]) result.pass=false;
+              }
+              return result;
+            }
           }
-          return true;
-        },
-      });
+        }
+      };
+      addMatchers(customMatchers);
     });
 
-    beforeEachWaitsForDone(function(done) {
+    beforeEach(function(done) {
       createSockets('udp', 2, done);
     });
 
 
-    itWaitsForDone('port is available (sanity test)', function(done) {
+    it('port is available (sanity test)', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult) {
         expect(bindResult).toEqual(0);
         done();
       });
     });
 
-    itWaitsForDone('bind to port 0 works', function(done) {
+    it('bind to port 0 works', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, 0, function(bindResult) {
         expect(bindResult).toEqual(0);
         done();
       });
     });
 
-    itWaitsForDone('bind to addr 0.0.0.0 works', function(done) {
+    it('bind to addr 0.0.0.0 works', function(done) {
       chrome.socket.bind(sockets[0].socketId, '0.0.0.0', 0, function(bindResult) {
         expect(bindResult).toEqual(0);
         done();
       });
     });
 
-    itWaitsForDone('getInfo works', function(done) {
+    it('getInfo works', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult) {
         expect(bindResult).toEqual(0);
 
@@ -311,7 +327,7 @@ registerTest('chrome.socket', function(runningInBackground) {
       });
     });
 
-    itWaitsForDone('bind recvFrom sendTo with reply', function(done) {
+    it('bind recvFrom sendTo with reply', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult) {
         expect(bindResult).toEqual(0);
 
@@ -340,7 +356,7 @@ registerTest('chrome.socket', function(runningInBackground) {
     });
 
 
-    xitWaitsForDone('bind connect x2 read write', function(done) {
+    xit('bind connect x2 read write', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult1) {
         expect(bindResult1).toEqual(0);
 
@@ -369,7 +385,7 @@ registerTest('chrome.socket', function(runningInBackground) {
     });
 
 
-    itWaitsForDone('multiCast joinGroup single local client', function(done) {
+    it('multiCast joinGroup single local client', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult1) {
         expect(bindResult1).toEqual(0);
         chrome.socket.joinGroup(sockets[0].socketId, multicastAddr, function(joinResult1) {
@@ -392,7 +408,7 @@ registerTest('chrome.socket', function(runningInBackground) {
       });
     });
 
-    itWaitsForDone('multiCast leaveGroup', function(done) {
+    it('multiCast leaveGroup', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult1) {
         expect(bindResult1).toEqual(0);
         chrome.socket.joinGroup(sockets[0].socketId, multicastAddr, function(joinResult1) {
@@ -418,7 +434,7 @@ registerTest('chrome.socket', function(runningInBackground) {
       });
     });
 
-    itWaitsForDone('multiCast getJoinedGroups', function(done) {
+    it('multiCast getJoinedGroups', function(done) {
       chrome.socket.bind(sockets[0].socketId, bindAddr, port, function(bindResult1) {
         expect(bindResult1).toEqual(0);
         chrome.socket.joinGroup(sockets[0].socketId, multicastAddr, function(joinResult1) {
