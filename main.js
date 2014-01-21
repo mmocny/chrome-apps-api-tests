@@ -5,18 +5,24 @@
 /******************************************************************************/
 
 // GLOBAL
-window.tests = {};
+window.tests = Object.create(null);
+
+window.registerTest = function(name, fn) {
+  if (typeof chrome.runtime === 'undefined') {
+    eval(require('org.apache.cordova.test-framework.test').injectJasmineInterface(this, 'this'));
+    exports.init = fn;
+  } else {
+    window.tests[name] = { defineAutoTests: fn };
+  }
+};
 
 /******************************************************************************/
 
 function getMode(callback) {
-  return chrome.storage.local.get({'mode': 'main'}, funtion(result) { callback(result['mode']); });
+  return chrome.storage.local.get({'mode': 'main'}, function(result) { callback(result['mode']); });
 }
 
 function setMode(mode) {
-  chrome.storage.local.set({'mode': mode});
-  clearContent();
-
   var handlers = {
     'main': runMain,
     'auto': runAutoTests,
@@ -25,6 +31,9 @@ function setMode(mode) {
   if (!handlers.hasOwnProperty(mode)) {
     return console.error("Unsopported mode: " + mode);
   }
+
+  chrome.storage.local.set({'mode': mode});
+  clearContent();
 
   handlers[mode]();
 }
