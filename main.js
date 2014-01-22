@@ -38,6 +38,29 @@ function setMode(mode) {
   handlers[mode]();
 }
 
+window.medic = {};
+window.medic.couchdb='http://172.23.188.139:5900';
+window.medic.couchdbext='http://172.23.188.139:5900';
+window.medic.sha ='sample'; 
+window.medic.enabled=false;
+window.medic.load = function (callback){
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "medic.json", true);
+    xhr.onload = function() {
+       var cfg = JSON.parse(xhr.responseText);
+       window.medic.sha = cfg.sha;
+       window.medic.couchdb = cfg.couchdb;
+       window.medic.couchdbext = cfg.couchdbext;
+       window.medic.enabled=true;
+       console.log('Loaded Medic Config: sha='+window.medic.sha+',couchdb='+window.medic.couchdb+',couchdbext='+window.medic.couchdbext);
+       callback();
+    }
+    xhr.onerror = function(){
+       callback();
+    }
+    xhr.send();
+}
+
 function clearContent() {
   var content = document.getElementById('content');
   //while (content.firstChild) content.removeChild(content.firstChild);
@@ -199,13 +222,18 @@ function runMain() {
   createButton('Auto Tests', setMode.bind(null, 'auto'));
   createButton('Manual Tests', setMode.bind(null, 'manual'));
   createButton('Reset App', chrome.runtime.reload);
+  if(window.medic.enabled) {
+    runAutoTests();
+  }
 }
 
 /******************************************************************************/
 
 function loaded() {
   setUpJasmine();
-  getMode(setMode);
+  window.medic.load(function(){
+    getMode(setMode);
+  });
 }
 
 document.addEventListener("DOMContentLoaded", loaded);
