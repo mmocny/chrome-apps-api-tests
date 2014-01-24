@@ -27,6 +27,7 @@
     "storage",
     "syncFileSystem",
     "http://www.apache.org/*",
+    "http://127.0.0.1/*",
     "https://www.googleapis.com/*"
   ],
   "default_locale": "fr"

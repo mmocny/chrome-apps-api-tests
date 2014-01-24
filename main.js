@@ -39,20 +39,16 @@ function setMode(mode) {
 }
 
 window.medic = {};
-window.medic.couchdb='http://172.23.188.139:5900';
-window.medic.couchdbext='http://172.23.188.139:5900';
-window.medic.sha ='sample'; 
+window.medic.logurl='http://127.0.0.1:7800';
 window.medic.enabled=false;
 window.medic.load = function (callback){
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "medic.json", true);
     xhr.onload = function() {
        var cfg = JSON.parse(xhr.responseText);
-       window.medic.sha = cfg.sha;
-       window.medic.couchdb = cfg.couchdb;
-       window.medic.couchdbext = cfg.couchdbext;
+       window.medic.logurl = cfg.logurl;
        window.medic.enabled=true;
-       console.log('Loaded Medic Config: sha='+window.medic.sha+',couchdb='+window.medic.couchdb+',couchdbext='+window.medic.couchdbext);
+       console.log('Loaded Medic Config: logurl='+window.medic.logurl);
        callback();
     }
     xhr.onerror = function(){
@@ -86,9 +82,19 @@ function createButton(title, callback) {
   content.appendChild(div);
 }
 
+function sendDebug(logmsg){
+  if(window.medic.enabled){
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", window.medic.logurl, true);
+    xhr.setRequestHeader("Content-Type","text/plain");
+    xhr.send(logmsg);
+  }
+}
+
 // TODO: make a better logger
 function logger() {
   console.log.apply(console, Array.prototype.slice.apply(arguments));
+  sendDebug(Array.prototype.slice.apply(arguments));
   var el = document.getElementById('log');
   var div = document.createElement('div');
   div.textContent = Array.prototype.slice.apply(arguments).map(function(arg) {
@@ -104,6 +110,7 @@ function setUpJasmine() {
   // Set up jasmine
   var jasmine = jasmineRequire.core(jasmineRequire);
   jasmineRequire.html(jasmine);
+  jasmineRequire.medic(jasmine);
   var jasmineEnv = jasmine.getEnv();
 
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 300;
@@ -149,6 +156,13 @@ function setUpJasmine() {
   });
   jasmineInterface.htmlReporter.initialize();
   jasmineEnv.addReporter(jasmineInterface.htmlReporter);
+
+  jasmineInterface.MedicReporter = new jasmine.MedicReporter({
+    env:jasmineEnv,
+    log:{logurl: window.medic.logurl}
+  });
+  jasmineInterface.MedicReporter.initialize();
+  jasmineEnv.addReporter(jasmineInterface.MedicReporter);
 
   // Add Spec Filter
   jasmineEnv.specFilter = function(spec) {
@@ -230,8 +244,8 @@ function runMain() {
 /******************************************************************************/
 
 function loaded() {
-  setUpJasmine();
   window.medic.load(function(){
+    setUpJasmine();
     getMode(setMode);
   });
 }
