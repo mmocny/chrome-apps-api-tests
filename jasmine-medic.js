@@ -56,11 +56,17 @@ jasmineRequire.MedicReporter = function(j$) {
       }
       if (result.status == "failed") {
         failureCount++;
+        results.push(result);
       }
       if (result.status == "pending") {
         pendingSpecCount++;
       }
     };
+
+    buildResults = function(){
+      var json ={specs:specsExecuted, failures:failureCount, results: results};
+      return json;
+    }
     
     this.jasmineDone = function() {
       var p = 'Desktop';
@@ -71,7 +77,7 @@ jasmineRequire.MedicReporter = function(j$) {
       }
 
       this.postTests({
-          mobilespec:results,
+          mobilespec:buildResults(),
           platform:(platformMap.hasOwnProperty(p) ? platformMap[p] : p),
           version:p,
           timestamp:Math.round(Math.floor((new Date()).getTime() / 1000)),
