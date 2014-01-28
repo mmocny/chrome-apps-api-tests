@@ -51,7 +51,23 @@ registerTest("AlarmTest", function() {
     expect(chrome.alarms.clearAll).toBeDefined();
     expect(chrome.alarms.onAlarm).toBeDefined();
   });
+ var isProduction=true;
+ var getPalarm = function(callback){
+   chrome.alarms.create('testalarm',{when:1});
+   callback();
+ }
+ var isProd = function(){
+   getPalarm(function(){
+     chrome.alarms.get('testalarm',function(a){
+       if (a.scheduledTime < Date.now()+300){
+         isProduction=false;
+       }
+     });
+   });
+ }
 
+
+ if(!isProduction){
   describe('testing alarms', function() {
 
     beforeEach(function() {
@@ -273,5 +289,6 @@ registerTest("AlarmTest", function() {
       });
     });
   });
+ }
 });
 
