@@ -51,24 +51,54 @@ registerTest("AlarmTest", function() {
     expect(chrome.alarms.clearAll).toBeDefined();
     expect(chrome.alarms.onAlarm).toBeDefined();
   });
- var isProduction=true;
- var getPalarm = function(callback){
-   chrome.alarms.create('testalarm',{when:1});
-   callback();
- }
- var isProd = function(){
-   getPalarm(function(){
-     chrome.alarms.get('testalarm',function(a){
-       if (a.scheduledTime < Date.now()+300){
-         isProduction=false;
-       }
-     });
-   });
- }
 
+// this next bit is to figure out if we are on real production Chrome. If it is, then
+// alarms will have a minimum granularity of one minute. This makes the tests take
+// about 25 minutes to run if you adjust for that, so we just skip them. It hurts less.
 
- if(!isProduction){
-  describe('testing alarms', function() {
+  var probeAlarmHandler=function(alarm){
+    prodCallback(0);
+  }
+
+  function forceClear(callback){
+    //this is to guarantee that the allars are empty before moving on
+    chrome.alarms.clearAll();
+    var ticker = setInterval(function(){
+      chrome.alarms.getAll(function(alarms){
+        if(!(alarms && alarms.length > 1)){
+          clearInterval(ticker);
+          callback();
+        }
+      });
+    },250);
+  }
+  
+  var runOnce=false;
+  var prodCallback = function(result){
+    if(!runOnce){
+      runOnce=true;
+      chrome.alarms.onAlarm.removeListener(probeAlarmHandler);
+      forceClear(function(){
+        console.log('got alarm',result, Date.now());
+        if (result == 0){ // tests are running with short minimums (debug mode)
+          runtests();
+        } else {
+         console.log('Skipping alarm tests due to 60 second minimums');
+        }
+      });
+   }
+  };
+ 
+  console.log('setting alarm',Date.now());
+  var gotime=Date.now()+100;
+  chrome.alarms.create('testalarm',{when:gotime});
+  chrome.alarms.onAlarm.addListener(probeAlarmHandler);
+  setTimeout( function(){
+    prodCallback(1);
+    }, 1500);
+
+  function runtests(){
+   describe('testing alarms', function() {
 
     beforeEach(function() {
       addMatchers(customMatchers);
@@ -289,6 +319,6 @@ registerTest("AlarmTest", function() {
       });
     });
   });
- }
+ };
 });
 
