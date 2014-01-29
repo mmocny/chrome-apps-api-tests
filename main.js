@@ -41,17 +41,19 @@ function setMode(mode) {
 window.medic = {};
 window.medic.logurl='http://127.0.0.1:7800';
 window.medic.enabled=false;
-window.medic.load = function (callback){
+window.medic.load = function (callback) {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "medic.json", true);
     xhr.onload = function() {
-       var cfg = JSON.parse(xhr.responseText);
-       window.medic.logurl = cfg.logurl;
-       window.medic.enabled=true;
-       console.log('Loaded Medic Config: logurl='+window.medic.logurl);
-       callback();
+      if (xhr.readyState == 4 && xhr.status == 200) {
+        var cfg = JSON.parse(xhr.responseText);
+        window.medic.logurl = cfg.logurl;
+        window.medic.enabled=true;
+        console.log('Loaded Medic Config: logurl=' + window.medic.logurl);
+      }
+      callback();
     }
-    xhr.onerror = function(){
+    xhr.onerror = function() {
        callback();
     }
     xhr.send();
@@ -244,7 +246,7 @@ function runMain() {
 /******************************************************************************/
 
 function loaded() {
-  window.medic.load(function(){
+  window.medic.load(function() {
     setUpJasmine();
     getMode(setMode);
   });
