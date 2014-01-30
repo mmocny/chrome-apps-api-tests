@@ -18,26 +18,6 @@ window.registerTest = function(name, fn) {
 
 /******************************************************************************/
 
-function getMode(callback) {
-  return chrome.storage.local.get({'mode': 'main'}, function(result) { callback(result['mode']); });
-}
-
-function setMode(mode) {
-  var handlers = {
-    'main': runMain,
-    'auto': runAutoTests,
-    'manual': runManualTests
-  }
-  if (!handlers.hasOwnProperty(mode)) {
-    return console.error("Unsopported mode: " + mode);
-  }
-
-  chrome.storage.local.set({'mode': mode});
-  clearContent();
-
-  handlers[mode]();
-}
-
 window.medic = {};
 window.medic.logurl='http://127.0.0.1:7800';
 window.medic.enabled=false;
@@ -57,6 +37,30 @@ window.medic.load = function (callback) {
        callback();
     }
     xhr.send();
+}
+
+/******************************************************************************/
+
+function getMode(callback) {
+  return chrome.storage.local.get({'mode': 'main'}, function(result) {
+    callback(result['mode']);
+  });
+}
+
+function setMode(mode) {
+  var handlers = {
+    'main': runMain,
+    'auto': runAutoTests,
+    'manual': runManualTests
+  }
+  if (!handlers.hasOwnProperty(mode)) {
+    return console.error("Unsopported mode: " + mode);
+  }
+
+  chrome.storage.local.set({'mode': mode});
+  clearContent();
+
+  handlers[mode]();
 }
 
 function clearContent() {
@@ -112,7 +116,6 @@ function setUpJasmine() {
   // Set up jasmine
   var jasmine = jasmineRequire.core(jasmineRequire);
   jasmineRequire.html(jasmine);
-  jasmineRequire.medic(jasmine);
   var jasmineEnv = jasmine.getEnv();
 
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 300;
@@ -159,9 +162,10 @@ function setUpJasmine() {
   jasmineInterface.htmlReporter.initialize();
   jasmineEnv.addReporter(jasmineInterface.htmlReporter);
 
+  jasmineRequire.medic(jasmine);
   jasmineInterface.MedicReporter = new jasmine.MedicReporter({
-    env:jasmineEnv,
-    log:{logurl: window.medic.logurl}
+    env: jasmineEnv,
+    log: { logurl: window.medic.logurl }
   });
   jasmineInterface.MedicReporter.initialize();
   jasmineEnv.addReporter(jasmineInterface.MedicReporter);
@@ -183,11 +187,11 @@ function addJasmineHelpers(jasmineInterface) {
   jasmineInterface.log = logger;
 
   jasmineInterface.isOnCordova = function() {
-    return false;
+    return typeof window.cordova !== 'undefined';
   };
 
   jasmineInterface.isOnChromeRuntime = function() {
-    return true;
+    return typeof window.chrome.runtime !== 'undefined';
   };
 
   jasmineInterface.describeCordovaOnly = (jasmineInterface.isOnCordova() ? jasmineInterface.describe : function(){});
@@ -238,9 +242,7 @@ function runMain() {
   createButton('Auto Tests', setMode.bind(null, 'auto'));
   createButton('Manual Tests', setMode.bind(null, 'manual'));
   createButton('Reset App', chrome.runtime.reload);
-  if(window.medic.enabled) {
-    runAutoTests();
-  }
+
 }
 
 /******************************************************************************/
@@ -248,7 +250,11 @@ function runMain() {
 function loaded() {
   window.medic.load(function() {
     setUpJasmine();
-    getMode(setMode);
+    if (window.medic.enabled) {
+      setMode('auto');
+    } else {
+      getMode(setMode);
+    }
   });
 }
 
