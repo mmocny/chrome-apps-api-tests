@@ -7,13 +7,27 @@
 // GLOBAL
 window.tests = Object.create(null);
 
+window.specRegex = null;
+
 window.registerTest = function(name, fn) {
   if (typeof chrome.runtime === 'undefined') {
     eval(require('org.apache.cordova.test-framework.test').injectJasmineInterface(this, 'this'));
     exports.init = fn;
   } else {
-    window.tests[name] = { defineAutoTests: fn };
+    window.tests[name] = {
+      defineAutoTests: function() {
+        // jasmineInterface will not be available until defineAutoTests is actually called
+        var jasmineInterface = window;
+        jasmineInterface.describe(name + ' >>', fn);
+      }
+    };
   }
+};
+
+window.resetTests = function(spec) {
+  if (spec)
+    window.specRegex = new Regex(spec);
+
 };
 
 /******************************************************************************/
@@ -43,6 +57,7 @@ window.medic.load = function (callback) {
 
 function getMode(callback) {
   return chrome.storage.local.get({'mode': 'main'}, function(result) {
+    console.log(result['mode']);
     callback(result['mode']);
   });
 }
@@ -65,8 +80,9 @@ function setMode(mode) {
 
 function clearContent() {
   var content = document.getElementById('content');
-  //while (content.firstChild) content.removeChild(content.firstChild);
-  // TODO
+  content.innerHTML = '';
+  var logger = document.getElementById('log');
+  log.innerHTML = '';
 }
 
 function setTitle(title) {
@@ -147,33 +163,14 @@ function setUpJasmine() {
   addJasmineHelpers(jasmineInterface);
 
   // Add Reporters
-  jasmineInterface.jsApiReporter = new jasmine.JsApiReporter({ timer: new jasmine.Timer() });
-  jasmineEnv.addReporter(jasmineInterface.jsApiReporter);
-
-  jasmineInterface.htmlReporter = new jasmine.HtmlReporter({
-    env: jasmineEnv,
-    queryString: function() { return null; },
-    onRaiseExceptionsClick: function() { },
-    getContainer: function() { return document.getElementById('content'); },
-    createElement: function() { return document.createElement.apply(document, arguments); },
-    createTextNode: function() { return document.createTextNode.apply(document, arguments); },
-    timer: new jasmine.Timer()
-  });
-  jasmineInterface.htmlReporter.initialize();
-  jasmineEnv.addReporter(jasmineInterface.htmlReporter);
-
-  jasmineRequire.medic(jasmine);
-  jasmineInterface.MedicReporter = new jasmine.MedicReporter({
-    env: jasmineEnv,
-    log: { logurl: window.medic.logurl }
-  });
-  jasmineInterface.MedicReporter.initialize();
-  jasmineEnv.addReporter(jasmineInterface.MedicReporter);
+  addJasmineReporters(jasmineInterface, jasmineEnv);
 
   // Add Spec Filter
   jasmineEnv.specFilter = function(spec) {
     logger(spec.getFullName());
-    return true;
+    if (!window.specRegex)
+      return true;
+    return window.specRegex.test(spec);
   };
 
   // Attach jasmineInterface to global object
@@ -211,11 +208,41 @@ function addJasmineHelpers(jasmineInterface) {
   }
 }
 
+function addJasmineReporters(jasmineInterface, jasmineEnv) {
+  jasmineInterface.jsApiReporter = new jasmineInterface.jasmine.JsApiReporter({ timer: new jasmineInterface.jasmine.Timer() });
+  jasmineEnv.addReporter(jasmineInterface.jsApiReporter);
+
+  jasmineInterface.htmlReporter = new jasmineInterface.jasmine.HtmlReporter({
+    env: jasmineEnv,
+    queryString: function() { return null; },
+    onRaiseExceptionsClick: function() { },
+    getContainer: function() { return document.getElementById('content'); },
+    createElement: function() { return document.createElement.apply(document, arguments); },
+    createTextNode: function() { return document.createTextNode.apply(document, arguments); },
+    timer: new jasmineInterface.jasmine.Timer()
+  });
+  jasmineInterface.htmlReporter.initialize();
+  jasmineEnv.addReporter(jasmineInterface.htmlReporter);
+
+  jasmineRequire.medic(jasmineInterface.jasmine);
+  jasmineInterface.MedicReporter = new jasmineInterface.jasmine.MedicReporter({
+    env: jasmineEnv,
+    log: { logurl: window.medic.logurl }
+  });
+  jasmineInterface.MedicReporter.initialize();
+  jasmineEnv.addReporter(jasmineInterface.MedicReporter);
+}
+
 /******************************************************************************/
 
 function runAutoTests() {
+  clearContent();
   setTitle('Auto Tests');
+  createButton('Again', runAutoTests);
+  createButton('Reset App', chrome.runtime.reload);
   createButton('Back', setMode.bind(null, 'main'));
+
+  addJasmineReporters(window, window.jasmine.getEnv());
 
   // TODO: Add selective checkmarks
   Object.keys(window.tests).forEach(function(key) {
@@ -230,6 +257,7 @@ function runAutoTests() {
 /******************************************************************************/
 
 function runManualTests() {
+  clearContent();
   setTitle('Manual Tests');
   createButton('Back', setMode.bind(null, 'main'));
 }
@@ -237,6 +265,7 @@ function runManualTests() {
 /******************************************************************************/
 
 function runMain() {
+  clearContent();
   setTitle('Chrome Apps Api Tests');
 
   createButton('Auto Tests', setMode.bind(null, 'auto'));
@@ -247,7 +276,7 @@ function runMain() {
 
 /******************************************************************************/
 
-function loaded() {
+document.addEventListener("DOMContentLoaded", function() {
   window.medic.load(function() {
     setUpJasmine();
     if (window.medic.enabled) {
@@ -256,9 +285,7 @@ function loaded() {
       getMode(setMode);
     }
   });
-}
-
-document.addEventListener("DOMContentLoaded", loaded);
+});
 
 /******************************************************************************/
 
