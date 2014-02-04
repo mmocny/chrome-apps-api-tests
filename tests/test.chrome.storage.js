@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-registerTest("Storage", function() {
+registerTest("chrome.storage", function() {
   'use strict';
+
   it('should contain definitions', function() {
     expect(chrome.storage).toBeDefined();
     expect(chrome.storage.local).toBeDefined();
@@ -68,41 +69,42 @@ registerTest("Storage", function() {
     describe('chrome.storage.' + type, function() {
       describe('testing set', function() {
 
-	it('set(object) with single values ', function(outer_done) {
+  it('set(object) with single values ', function(outer_done) {
          storagearea.clear(function(){
-	   Object.keys(obj).forEach(function(key) {
-	    it(' type: ' + key, function(done) {
-	      var temp = {};
-	      temp[key] = obj[key];
-	      storagearea.set(temp,function(){
-	        storagearea.get(key, function(items) {
-		  expect(items[key]).toEqual(expected[key]);
+     Object.keys(obj).forEach(function(key) {
+       /*
+      it(' type: ' + key, function(done) {  // TODO: This is not binding to outer describe for some reason
+        var temp = {};
+        temp[key] = obj[key];
+        storagearea.set(temp,function(){
+          storagearea.get(key, function(items) {
+      expect(items[key]).toEqual(expected[key]);
 
-		  storagearea.get(function(items) {
-		    expect(Object.keys(items).length).toEqual(+(key in expected));
+      storagearea.get(function(items) {
+        expect(Object.keys(items).length).toEqual(+(key in expected));
                     done();
-		  });
-	        });
+      });
+          });
               });
-              });
+              });*/
             });
           });
           outer_done();
         });
 
-	it('set(object) with multiple values', function(done) {
+  it('set(object) with multiple values', function(done) {
           storagearea.clear(function(){
-	    storagearea.set(obj,function(){
-	      storagearea.get(Object.keys(obj), function(items) {
-	        expect(items).toEqual(expected);
+      storagearea.set(obj,function(){
+        storagearea.get(Object.keys(obj), function(items) {
+          expect(items).toEqual(expected);
 
-	        storagearea.get(function(items) {
-		  expect(items).toEqual(expected);
+          storagearea.get(function(items) {
+      expect(items).toEqual(expected);
                     done();
-	        });
-	      });
+          });
+        });
             });
-	  });
+    });
         });
       });
 
@@ -118,85 +120,85 @@ registerTest("Storage", function() {
           });
         });
 
-	it('get(null) should return all items', function(done) {
+  it('get(null) should return all items', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      storagearea.get(null,function(items) {
-		expect(items).toEqual(expected);
+        storagearea.get(null,function(items) {
+    expect(items).toEqual(expected);
                     done();
-	      });
-	    });
+        });
+      });
           });
         });
 
-	it('get(string) should return item with that key', function(done) {
+  it('get(string) should return item with that key', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      storagearea.get('int', function(items) {
-		expect(items).toEqual({'int': expected.int});
+        storagearea.get('int', function(items) {
+    expect(items).toEqual({'int': expected.int});
                     done();
-	      });
-	    });
+        });
+      });
           });
         });
 
-	it('get(object) should return all items with those keys, or items with default values provided', function(done) {
+  it('get(object) should return all items with those keys, or items with default values provided', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      var request = {
-		'int': 'should ignore',
-		'double': 'also ignore',
-		'z': 'should not ignore'
-	      };
-	      var answer = {
-		'int': expected.int,
-		'double': expected.double,
-		'z': request.z
-	      };
-	      storagearea.get(request,function(items) {
-		expect(items).toEqual(answer);
+        var request = {
+    'int': 'should ignore',
+    'double': 'also ignore',
+    'z': 'should not ignore'
+        };
+        var answer = {
+    'int': expected.int,
+    'double': expected.double,
+    'z': request.z
+        };
+        storagearea.get(request,function(items) {
+    expect(items).toEqual(answer);
                     done();
-	      });
-	    });
+        });
+      });
           });
         });
 
-	it('get([string, ...]) should return items with those keys, ignoring keys that arent found', function(done) {
+  it('get([string, ...]) should return items with those keys, ignoring keys that arent found', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      var answer = {
-		'int': expected.int,
-		'double': expected.double
-	      };
-	      storagearea.get(['int','double','x','y','z'], function(items) {
-		expect(items).toEqual(answer);
-	        storagearea.get([], function(items) {
-		  expect(items).toEqual({});
+        var answer = {
+    'int': expected.int,
+    'double': expected.double
+        };
+        storagearea.get(['int','double','x','y','z'], function(items) {
+    expect(items).toEqual(answer);
+          storagearea.get([], function(items) {
+      expect(items).toEqual({});
                     done();
-	        });
-	      });
-	    });
-	  });
-	});
+          });
+        });
+      });
+    });
+  });
       });
 
       describe('testing clear', function() {
-	it('should delete all items', function(done) {
+  it('should delete all items', function(done) {
           storagearea.clear( function(){
-	    storagearea.set(obj,function(){
-	      storagearea.get(function(items) {
-	        expect(Object.keys(items).length).toEqual(Object.keys(expected).length);
+      storagearea.set(obj,function(){
+        storagearea.get(function(items) {
+          expect(Object.keys(items).length).toEqual(Object.keys(expected).length);
 
-	        storagearea.clear(function(){
-	          storagearea.get(function(items) {
-		    expect(Object.keys(items).length).toEqual(0);
+          storagearea.clear(function(){
+            storagearea.get(function(items) {
+        expect(Object.keys(items).length).toEqual(0);
                     done();
-	          });
-                });
-	      });
             });
-	  });
-	});
+                });
+        });
+            });
+    });
+  });
       });
 
       describe('testing remove', function() {
@@ -204,42 +206,42 @@ registerTest("Storage", function() {
         it('remove(string) should remove item with key', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      storagearea.remove('int', function(){
-	        storagearea.get(function(items) {
-		  expect(items.int).toBeUndefined();
-		  expect(Object.keys(items).length).toEqual(Object.keys(expected).length - 1);
+        storagearea.remove('int', function(){
+          storagearea.get(function(items) {
+      expect(items.int).toBeUndefined();
+      expect(Object.keys(items).length).toEqual(Object.keys(expected).length - 1);
                     done();
-	        });
+          });
               })
-	    });
+      });
           });
         });
 
-	it('remove(string) with invalid key should be ignored', function(done) {
+  it('remove(string) with invalid key should be ignored', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      storagearea.remove('z',function(){
-	        storagearea.get(function(items) {
-	  	  expect(items).toEqual(expected);
+        storagearea.remove('z',function(){
+          storagearea.get(function(items) {
+        expect(items).toEqual(expected);
                     done();
-	        });
+          });
               });
-	    });
+      });
           });
         });
 
-	it('remove([string, ...]) should remove item with key, ignoring invalid keys', function(done) {
+  it('remove([string, ...]) should remove item with key, ignoring invalid keys', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      storagearea.remove(['int','string','z'], function(){
-	        storagearea.get(function(items) {
-	 	  expect(items.int).toBeUndefined();
-		  expect(items.string).toBeUndefined();
-		  expect(Object.keys(items).length).toEqual(Object.keys(expected).length - 2);
+        storagearea.remove(['int','string','z'], function(){
+          storagearea.get(function(items) {
+      expect(items.int).toBeUndefined();
+      expect(items.string).toBeUndefined();
+      expect(Object.keys(items).length).toEqual(Object.keys(expected).length - 2);
                     done();
-	        });
+          });
               });
-	    });
+      });
           });
         });
       });
@@ -249,51 +251,51 @@ registerTest("Storage", function() {
 
         // Size depends on storage format. Thus use a range of acceptable values
         // Use JSON notation length as estimate along with 100 bytes of overhead
-	it('getBytesInUse() should return size of all items', function(done) {
+  it('getBytesInUse() should return size of all items', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	       var answer = expected;
-	       storagearea.getBytesInUse(function(bytes) {
-		 var approxSize = JSON.stringify(answer).length;
-		 expect(bytes).toBeGreaterThan(0.5 * approxSize);
-		 expect(bytes).toBeLessThan(1.5 * approxSize + 100);
+         var answer = expected;
+         storagearea.getBytesInUse(function(bytes) {
+     var approxSize = JSON.stringify(answer).length;
+     expect(bytes).toBeGreaterThan(0.5 * approxSize);
+     expect(bytes).toBeLessThan(1.5 * approxSize + 100);
                     done();
-	       });
-	    });
+         });
+      });
           });
         });
 
-	it('getBytesInUse(null) should return size of all items', function(done) {
+  it('getBytesInUse(null) should return size of all items', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	       var answer = expected;
-	       storagearea.getBytesInUse(null, function(bytes) {
-		 var approxSize = JSON.stringify(answer).length;
-		 expect(bytes).toBeGreaterThan(0.5 * approxSize);
-		 expect(bytes).toBeLessThan(1.5 * approxSize + 100);
+         var answer = expected;
+         storagearea.getBytesInUse(null, function(bytes) {
+     var approxSize = JSON.stringify(answer).length;
+     expect(bytes).toBeGreaterThan(0.5 * approxSize);
+     expect(bytes).toBeLessThan(1.5 * approxSize + 100);
                     done();
-	       });
-	    });
+         });
+      });
           });
         });
 
-	it('getBytesInUse([string, ...])', function(done) {
+  it('getBytesInUse([string, ...])', function(done) {
           storagearea.clear( function(){
             storagearea.set(obj,function(){
-	      // note: dont forget that [] should return 0
-	       var request = ['int', 'string'];
-	       var answer = {};
-	       for(var i =0; i < request.length; i++) {
-		 answer[request[i]] = expected[request[i]];
-	       }
-	       storagearea.getBytesInUse(request, function(bytes) {
-		 var approxSize = JSON.stringify(answer).length;
-		 expect(bytes).toBeGreaterThan(0.5 * approxSize);
-		 expect(bytes).toBeLessThan(1.5 * approxSize + 100);
+        // note: dont forget that [] should return 0
+         var request = ['int', 'string'];
+         var answer = {};
+         for(var i =0; i < request.length; i++) {
+     answer[request[i]] = expected[request[i]];
+         }
+         storagearea.getBytesInUse(request, function(bytes) {
+     var approxSize = JSON.stringify(answer).length;
+     expect(bytes).toBeGreaterThan(0.5 * approxSize);
+     expect(bytes).toBeLessThan(1.5 * approxSize + 100);
                     done();
-	       });
-	    });
-	  });
+         });
+      });
+    });
         });
       });
 
@@ -314,7 +316,7 @@ registerTest("Storage", function() {
           };
           storagearea.clear(function(){
             storagearea.set(obj,function(){
-	      chrome.storage.onChanged.addListener(callback);
+        chrome.storage.onChanged.addListener(callback);
               storagearea.set(request);
             });
           });
