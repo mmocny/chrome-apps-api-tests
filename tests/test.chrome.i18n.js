@@ -162,7 +162,7 @@ registerTest('chrome.i18n', function(runningInBackground) {
   if (langEnUs) {
     it('should replace placeholders within manifest.json', function(done) {
       var manifest = chrome.runtime.getManifest();
-      expect(manifest.name).toBe('ChromeApiTests');
+      expect(manifest.name).toBe('Chrome Apps Api Tests');
       done();
     });
 

@@ -310,6 +310,7 @@ registerTest("chrome.storage", function() {
           };
           var callback = function(items, areaName) {
             expect(items).toEqual(answer);
+//            expect(items===answer).toEqual(true);
             expect(areaName).toEqual(type);
             chrome.storage.onChanged.removeListener(callback);
             done();
