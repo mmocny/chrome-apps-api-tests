@@ -169,9 +169,8 @@ registerAutoTests('chrome.i18n', function(runningInBackground) {
     describe('getAcceptLanguages()', function() {
       it('should return a list', function(done) {
         chrome.i18n.getAcceptLanguages(function(x) {
-          for (var i = 0; i < x.length; ++i) {
-            expect(x[i]).toMatch(/^en/);
-          }
+          expect(x).toEqual(jasmine.any(Array));
+          expect(x.some(function(lang) { return /^en/.test(lang); })).toBe(true);
           done();
         });
       });
