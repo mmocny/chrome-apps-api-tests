@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-registerTest("chrome.runtime", function(runningInBackground) {
+registerAutoTests("chrome.runtime", function(runningInBackground) {
   'use strict';
 
   it('getManifest() should have a name that is a string', function() {

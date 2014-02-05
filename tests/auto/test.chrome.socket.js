@@ -18,7 +18,7 @@ function forEachWaitForDoneAndThen(arr, handler, andthen) {
   callnext();
 }
 
-registerTest('chrome.socket', function(runningInBackground) {
+registerAutoTests('chrome.socket', function(runningInBackground) {
   'use strict';
   // constants
   var bindAddr = '0.0.0.0';

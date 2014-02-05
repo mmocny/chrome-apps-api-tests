@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-registerTest('chrome.app.window', function(runningInBackground) {
+registerAutoTests('chrome.app.window', function(runningInBackground) {
   'use strict';
   if (runningInBackground) {
     it('current() should return null', function() {

@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 
-registerTest("chrome.alarms", function() {
+registerAutoTests("chrome.alarms", function() {
   'use strict';
   var sliceLowerLimit=300; // chrome production is 60000 ms, can get away with as low as 300ms for mobile (not spec)
   var alarmEarlyTolerance = sliceLowerLimit;

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-registerTest("chrome.notifications", function() {
+registerAutoTests("chrome.notifications", function() {
   'use strict';
   var testTimeout = 2000;
 

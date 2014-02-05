@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-registerTest('chrome.fileSystem', function(runningInBackground) {
+registerAutoTests('chrome.fileSystem', function(runningInBackground) {
   'use strict';
   describeCordovaOnly('chrome.fileSystem', function() {
     // Create a file entry for testing.
