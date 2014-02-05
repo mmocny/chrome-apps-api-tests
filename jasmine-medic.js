@@ -116,7 +116,7 @@ jasmineRequire.MedicReporter = function(j$) {
    * @param startMs Start time in Milliseconds
    * @param finishMs Finish time in Milliseconds
    * @return Elapsed time in Seconds */
-  function elapsedSec (startMs, finishMs) {
+  function elapsedSec(startMs, finishMs) {
     return (finishMs - startMs) / 1000;
   }
 
@@ -127,5 +127,3 @@ jasmineRequire.MedicReporter = function(j$) {
 
   return MedicReporter;
 };
-
-

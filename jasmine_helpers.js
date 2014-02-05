@@ -43,7 +43,7 @@ exports.setUpJasmine = function() {
 
   // Add Spec Filter
   jasmineEnv.specFilter = function(spec) {
-    logger(spec.getFullName());
+    //logger(spec.getFullName());
     return true;
   };
 
@@ -98,13 +98,15 @@ function addJasmineReporters(jasmineInterface, jasmineEnv) {
   jasmineInterface.htmlReporter.initialize();
   jasmineEnv.addReporter(jasmineInterface.htmlReporter);
 
-  jasmineRequire.medic(jasmineInterface.jasmine);
-  jasmineInterface.MedicReporter = new jasmineInterface.jasmine.MedicReporter({
-    env: jasmineEnv,
-    log: { logurl: window.medic.logurl }
-  });
-  jasmineInterface.MedicReporter.initialize();
-  jasmineEnv.addReporter(jasmineInterface.MedicReporter);
+  if (window.medic.enabled) {
+    jasmineRequire.medic(jasmineInterface.jasmine);
+    jasmineInterface.MedicReporter = new jasmineInterface.jasmine.MedicReporter({
+      env: jasmineEnv,
+      log: { logurl: window.medic.logurl }
+    });
+    jasmineInterface.MedicReporter.initialize();
+    jasmineEnv.addReporter(jasmineInterface.MedicReporter);
+  }
 }
 
 }());
